@@ -19,7 +19,7 @@ Automated AWS deployment of a web server + PostgreSQL database using Terraform.
 
 2. **Add your credentials**
 
-   Create `dev.tfvars`:
+   Create `dev.tfvars` file:
 
 ```hcl
    db_username   = "dbadmin"
@@ -59,4 +59,4 @@ terraform destroy -var-file="dev.tfvars"
 
 ## After Deployment
 
-Check the outputs for your server IP and database endpoint. Always destroy resources when done to avoid charges.
+Check the outputs for your server IP and database endpoint. Destroy resources when done to avoid charges.
