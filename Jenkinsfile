@@ -13,6 +13,9 @@ pipeline {
         AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_DEFAULT_REGION    = 'eu-west-1'
+        TF_VAR_db_username    = credentials('db-username')
+        TF_VAR_db_password    = credentials('db-password')
+        TF_VAR_key_pair_name  = credentials('key-pair-name')
     }
     
     stages {
