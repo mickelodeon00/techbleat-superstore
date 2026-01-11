@@ -9,11 +9,11 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 # cloning repo
-sudo git clone https://github.com/techbleat/fruits-veg_market.git
-
-# Create virtual environment
-cd fruits-veg_market
-python3 -m venv venv
+# Working in /home/ec2-user as ec2-user
+cd /home/ec2-user
+sudo -u ec2-user git clone https://github.com/techbleat/fruits-veg_market.git
+cd fruits-veg_market/python
+sudo -u ec2-user python3 -m venv venv
 
 # Done
 echo "Setup complete"
