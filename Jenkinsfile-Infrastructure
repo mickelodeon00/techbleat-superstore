@@ -2,7 +2,11 @@ pipeline {
     agent any
     
     parameters {
-        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Terraform action')
+        choice(
+            name: 'ACTION',
+            choices: ['plan', 'apply', 'destroy'],
+            description: 'Terraform action'
+        )
     }
     
     environment {
@@ -15,12 +19,6 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'mini-project', url: 'https://github.com/techbleat/fruits-veg_market.git'
-            }
-        }
-        
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
@@ -43,6 +41,12 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh 'terraform apply -auto-approve -var-file=dev.tfvars'
+                    sh '''
+                        echo "=========================================="
+                        echo "VM IP: $(terraform output -raw web_server_public_ip)"
+                        echo "DB Endpoint: $(terraform output -raw database_endpoint)"
+                        echo "=========================================="
+                    '''
                 }
             }
         }
@@ -52,18 +56,6 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh 'terraform destroy -auto-approve -var-file=dev.tfvars'
-                }
-            }
-        }
-        
-        stage('Show Outputs') {
-            when { expression { params.ACTION == 'apply' } }
-            steps {
-                dir('terraform') {
-                    sh '''
-                        echo "VM IP: $(terraform output -raw web_server_public_ip)"
-                        echo "DB Endpoint: $(terraform output -raw database_endpoint)"
-                    '''
                 }
             }
         }
