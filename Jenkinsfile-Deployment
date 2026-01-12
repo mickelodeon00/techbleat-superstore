@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+    
+    environment {
+        VM_IP         = credentials('vm-public-ip')
+        DB_ENDPOINT   = credentials('db-endpoint')
+        DB_USERNAME   = credentials('db-username')
+        DB_PASSWORD   = credentials('db-password')
+        SSH_KEY       = credentials('ec2-ssh-key')
+    }
+    
+    stages {
+        stage('Deploy Backend') {
+            steps {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ec2-user@${VM_IP} << 'EOF'
+                        # Remove old code
+                        rm -rf /home/ec2-user/fruits-veg_market
+                        
+                        # Clone fresh code
+                        cd /home/ec2-user
+                        git clone -b mini-project https://github.com/techbleat/fruits-veg_market.git
+                        
+                        # Setup backend
+                        cd fruits-veg_market/backend-api
+                        python3 -m venv venv
+                        source venv/bin/activate
+                        pip install --quiet -r requirements.txt
+                        
+                        # Configure database
+                        sed -i "s|postgresql+psycopg://user:pass@db.server:5432/postgres|postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@${DB_ENDPOINT}/postgres?sslmode=require|g" main.py
+                        
+                        # Stop old backend
+                        pkill -f uvicorn || true
+                        sleep 2
+                        
+                        # Start backend
+                        nohup uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+                        
+                        echo "Backend deployed"
+EOF
+                '''
+            }
+        }
+        
+        stage('Deploy Frontend') {
+            steps {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ec2-user@${VM_IP} << 'EOF'
+                        # Deploy frontend
+                        sudo cp -r /home/ec2-user/fruits-veg_market/frontend/* /usr/share/nginx/html/
+                        
+                        # Restart Nginx
+                        sudo systemctl restart nginx
+                        
+                        echo "Frontend deployed"
+EOF
+                '''
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                    sleep 3
+                    curl -f http://${VM_IP}/api/products || exit 1
+                    echo "Deployment verified"
+                '''
+            }
+        }
+    }
+}

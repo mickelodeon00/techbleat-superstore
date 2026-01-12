@@ -8,7 +8,7 @@ resource "aws_db_instance" "postgres" {
   allocated_storage    = 20
   storage_type         = "gp2"
   
-  db_name  = "techbleatdb"
+  db_name  = "postgres"
   username = var.db_username
   password = var.db_password
   
