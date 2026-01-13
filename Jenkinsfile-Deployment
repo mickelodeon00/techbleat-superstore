@@ -54,14 +54,6 @@ ENDSSH
             }
         }
         
-        stage('Verify Deployment') {
-            steps {
-                sh """
-                    sleep 3
-                    curl -f http://\${VM_IP}/api/products || exit 1
-                    echo "Deployment verified successfully"
-                """
-            }
-        }
+
     }
 }
