@@ -12,8 +12,8 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 sshagent(['ec2-ssh-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@${VM_IP} << 'ENDSSH'
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ec2-user@\${VM_IP} bash -s << 'ENDSSH'
                             rm -rf /home/ec2-user/fruits-veg_market
                             cd /home/ec2-user
                             git clone -b mini-project https://github.com/techbleat/fruits-veg_market.git
@@ -23,7 +23,7 @@ pipeline {
                             source venv/bin/activate
                             pip install --quiet -r requirements.txt
                             
-                            sed -i "s|postgresql+psycopg://user:pass@db.server:5432/postgres|postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@${DB_ENDPOINT}/postgres?sslmode=require|g" main.py
+                            sed -i 's|postgresql+psycopg://user:pass@db.server:5432/postgres|postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@${DB_ENDPOINT}/postgres?sslmode=require|g' main.py
                             
                             pkill -f uvicorn || true
                             sleep 2
@@ -31,7 +31,7 @@ pipeline {
                             
                             echo "Backend deployed"
 ENDSSH
-                    '''
+                    """
                 }
             }
         }
@@ -39,28 +39,28 @@ ENDSSH
         stage('Deploy Frontend') {
             steps {
                 sshagent(['ec2-ssh-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@${VM_IP} << 'ENDSSH'
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ec2-user@\${VM_IP} bash -s << 'ENDSSH'
                             cd /home/ec2-user/fruits-veg_market/frontend
-                            sed -i "s|http://localhost:8000/api/products|/api/products|g" index.html
+                            sed -i 's|http://localhost:8000/api/products|/api/products|g' index.html
                             
                             sudo cp -r /home/ec2-user/fruits-veg_market/frontend/* /usr/share/nginx/html/
                             sudo systemctl restart nginx
                             
                             echo "Frontend deployed"
 ENDSSH
-                    '''
+                    """
                 }
             }
         }
         
         stage('Verify Deployment') {
             steps {
-                sh '''
+                sh """
                     sleep 3
-                    curl -f http://${VM_IP}/api/products || exit 1
+                    curl -f http://\${VM_IP}/api/products || exit 1
                     echo "Deployment verified successfully"
-                '''
+                """
             }
         }
     }
